@@ -36,8 +36,9 @@ function Admin() {
           <a href="#magazines">▤ <span>Magazines</span></a>
           <a href="#articles">▧ <span>Articles</span></a>
           <a href="#categories">◈ <span>Categories</span></a>
+          <a href="#blogs">✎ <span>Blogs</span></a>
+          <a href="#news">▤ <span>News</span></a>
         </nav>
-
         <div className="sidebar-label">MANAGEMENT</div>
 
         <nav className="admin-nav">
@@ -180,7 +181,35 @@ function Admin() {
             </button>
           </div>
         </section>
+        <section className="admin-content-grid">
+          <div className="admin-panel" id="blogs">
+            <div className="panel-heading">
+              <div>
+                <h3>Blogs Management</h3>
+                <p>Create and manage your blog posts</p>
+              </div>
+              <button onClick={() => alert('Create blog form coming soon.')}>
+                + Add Blog
+              </button>
+            </div>
 
+            <p>Manage blog content, edit existing posts, and publish new blogs.</p>
+          </div>
+
+          <div className="admin-panel" id="news">
+            <div className="panel-heading">
+              <div>
+                <h3>News Management</h3>
+                <p>Manage the latest news and updates</p>
+              </div>
+              <button onClick={() => alert('Create news form coming soon.')}>
+                + Add News
+              </button>
+            </div>
+
+            <p>Create, edit, and publish news updates on your website.</p>
+          </div>
+        </section>
         <footer className="admin-footer">
           © 2026 ChronicleHub · Admin Panel
         </footer>
