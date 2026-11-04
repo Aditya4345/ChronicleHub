@@ -1,4 +1,6 @@
+
 import './Admin.css'
+import BlogManagement from './BlogManagement'
 
 const stats = [
   { title: 'Total Magazines', value: '24', change: '+12%', icon: '▤' },
@@ -23,7 +25,10 @@ const activities = [
 function Admin() {
   return (
     <div className="admin-layout">
+
+      {/* Sidebar */}
       <aside className="admin-sidebar">
+
         <div className="admin-brand">
           Chronicle<span>Hub.</span>
           <small>ADMINISTRATION</small>
@@ -39,6 +44,7 @@ function Admin() {
           <a href="#blogs">✎ <span>Blogs</span></a>
           <a href="#news">▤ <span>News</span></a>
         </nav>
+
         <div className="sidebar-label">MANAGEMENT</div>
 
         <nav className="admin-nav">
@@ -54,9 +60,13 @@ function Admin() {
             <small>Administrator</small>
           </div>
         </div>
+
       </aside>
 
+      {/* Main Dashboard */}
       <main className="admin-main">
+
+        {/* Topbar */}
         <header className="admin-topbar">
           <div>
             <span className="admin-breadcrumb">Workspace / Overview</span>
@@ -69,17 +79,29 @@ function Admin() {
           </div>
         </header>
 
+        {/* Welcome Section */}
         <section className="dashboard-welcome">
           <div>
-            <span className="dashboard-eyebrow">SATURDAY, OCTOBER 31, 2026</span>
+            <span className="dashboard-eyebrow">
+              SATURDAY, OCTOBER 31, 2026
+            </span>
+
             <h2>Welcome back, Admin.</h2>
-            <p>Here's what's happening with your magazine platform today.</p>
+
+            <p>
+              Here's what's happening with your magazine platform today.
+            </p>
           </div>
-          <button className="create-magazine-btn" onClick={() => alert('Magazine creation form will be added in the next step.')}>
+
+          <button
+            className="create-magazine-btn"
+            onClick={() => alert('Magazine creation form will be added in the next step.')}
+          >
             + Create Magazine
           </button>
         </section>
 
+        {/* Statistics */}
         <section className="stats-grid">
           {stats.map((stat) => (
             <article className="stat-card" key={stat.title}>
@@ -87,19 +109,23 @@ function Admin() {
                 <span>{stat.title}</span>
                 <span className="stat-icon">{stat.icon}</span>
               </div>
+
               <strong>{stat.value}</strong>
               <small>{stat.change}</small>
             </article>
           ))}
         </section>
 
+        {/* Recent Magazines and Activity */}
         <section className="admin-content-grid">
+
           <div className="admin-panel magazines-panel" id="magazines">
             <div className="panel-heading">
               <div>
                 <h3>Recent Magazines</h3>
                 <p>Manage your latest magazine editions</p>
               </div>
+
               <a href="#magazines">View all ↗</a>
             </div>
 
@@ -112,6 +138,7 @@ function Admin() {
                     <th>DATE</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {magazines.map((magazine) => (
                     <tr key={magazine.title}>
@@ -119,11 +146,13 @@ function Admin() {
                         <strong>{magazine.title}</strong>
                         <small>{magazine.issue}</small>
                       </td>
+
                       <td>
                         <span className={`status-badge ${magazine.status.toLowerCase()}`}>
                           {magazine.status}
                         </span>
                       </td>
+
                       <td>{magazine.date}</td>
                     </tr>
                   ))}
@@ -144,6 +173,7 @@ function Admin() {
               {activities.map((activity) => (
                 <div className="activity-item" key={activity.title}>
                   <span className="activity-dot"></span>
+
                   <div>
                     <strong>{activity.title}</strong>
                     <p>{activity.detail}</p>
@@ -153,9 +183,12 @@ function Admin() {
               ))}
             </div>
           </div>
+
         </section>
 
+        {/* Quick Actions */}
         <section className="admin-panel quick-actions">
+
           <div className="panel-heading">
             <div>
               <h3>Quick Actions</h3>
@@ -164,37 +197,35 @@ function Admin() {
           </div>
 
           <div className="quick-action-grid">
+
             <button onClick={() => alert('Create magazine form coming soon.')}>
               <span>＋</span>
               <strong>Create Magazine</strong>
               <small>Add a new magazine edition</small>
             </button>
+
             <button onClick={() => alert('Create article form coming soon.')}>
               <span>✎</span>
               <strong>Write Article</strong>
               <small>Publish a new story</small>
             </button>
+
             <button onClick={() => alert('Media library coming soon.')}>
               <span>▧</span>
               <strong>Upload Media</strong>
               <small>Manage images and files</small>
             </button>
+
           </div>
         </section>
-        <section className="admin-content-grid">
-          <div className="admin-panel" id="blogs">
-            <div className="panel-heading">
-              <div>
-                <h3>Blogs Management</h3>
-                <p>Create and manage your blog posts</p>
-              </div>
-              <button onClick={() => alert('Create blog form coming soon.')}>
-                + Add Blog
-              </button>
-            </div>
 
-            <p>Manage blog content, edit existing posts, and publish new blogs.</p>
-          </div>
+        {/* Blogs Management */}
+        <section id="blogs">
+          <BlogManagement />
+        </section>
+
+        {/* News Management */}
+        <section className="admin-content-grid">
 
           <div className="admin-panel" id="news">
             <div className="panel-heading">
@@ -202,17 +233,24 @@ function Admin() {
                 <h3>News Management</h3>
                 <p>Manage the latest news and updates</p>
               </div>
+
               <button onClick={() => alert('Create news form coming soon.')}>
                 + Add News
               </button>
             </div>
 
-            <p>Create, edit, and publish news updates on your website.</p>
+            <p>
+              Create, edit, and publish news updates on your website.
+            </p>
           </div>
+
         </section>
+
+        {/* Footer */}
         <footer className="admin-footer">
           © 2026 ChronicleHub · Admin Panel
         </footer>
+
       </main>
     </div>
   )
