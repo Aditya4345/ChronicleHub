@@ -35,7 +35,33 @@ app.get('/api/db-test', async (req, res) => {
         });
     }
 });
+// Automatically publish scheduled news every 30 seconds
+const publishScheduledNews = async () => {
+    try {
+        const result = await pool.query(`
+            UPDATE news
+            SET status = 'published',
+                published_at = CURRENT_TIMESTAMP,
+                scheduled_at = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE status = 'scheduled'
+              AND scheduled_at <= CURRENT_TIMESTAMP
+            RETURNING id, title
+        `);
 
+        if (result.rows.length > 0) {
+            console.log('Scheduled news published:', result.rows);
+        }
+    } catch (error) {
+        console.error('Scheduled publishing error:', error);
+    }
+};
+
+// Check once when the server starts
+publishScheduledNews();
+
+// Check every 30 seconds
+setInterval(publishScheduledNews, 30000);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

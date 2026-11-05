@@ -102,7 +102,10 @@ router.get('/:id', async (req, res) => {
 // POST - Add news
 router.post('/', async (req, res) => {
     try {
-        const { title, summary, content, featured_image, author_id } = req.body;
+        const {
+            title, summary, content, featured_image,
+            author_id, scheduled_at
+        } = req.body;
 
         if (!title || !title.trim()) {
             return res.status(400).json({
@@ -111,35 +114,68 @@ router.post('/', async (req, res) => {
             });
         }
 
+        if (scheduled_at &&
+            (!Number.isFinite(Date.parse(scheduled_at)) ||
+             new Date(scheduled_at).getTime() <= Date.now())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please select a future date and time'
+            });
+        }
+
+        const status = scheduled_at ? 'scheduled' : 'draft';
+
         const result = await pool.query(
             `INSERT INTO news
-            (title, summary, content, featured_image, author_id, status)
-            VALUES ($1, $2, $3, $4, $5, 'draft')
+            (title, summary, content, featured_image, author_id, status, scheduled_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *`,
             [
                 title.trim(),
                 summary || null,
                 content || null,
                 featured_image || null,
-                author_id || null
+                author_id || null,
+                status,
+                scheduled_at || null
             ]
         );
 
         res.status(201).json({
             success: true,
-            message: 'News added successfully',
+            message: scheduled_at
+                ? 'News scheduled successfully'
+                : 'News added successfully',
             news: result.rows[0]
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: 'Failed to add news' });
+        res.status(500).json({
+            success: false,
+            message: 'Failed to add news'
+        });
     }
 });
 
 // PUT - Update news
 router.put('/:id', async (req, res) => {
     try {
-        const { title, summary, content, featured_image, status } = req.body;
+        const {
+            title, summary, content, featured_image, status, scheduled_at
+        } = req.body;
+
+        const hasSchedule = Object.prototype.hasOwnProperty.call(
+            req.body, 'scheduled_at'
+        );
+
+        if (scheduled_at &&
+            (!Number.isFinite(Date.parse(scheduled_at)) ||
+             new Date(scheduled_at).getTime() <= Date.now())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please select a future date and time'
+            });
+        }
 
         const result = await pool.query(
             `UPDATE news
@@ -147,11 +183,28 @@ router.put('/:id', async (req, res) => {
                  summary = COALESCE($2, summary),
                  content = COALESCE($3, content),
                  featured_image = COALESCE($4, featured_image),
-                 status = COALESCE($5, status),
+                 status = CASE
+                     WHEN $6::boolean AND $7::timestamptz IS NOT NULL
+                     THEN 'scheduled'
+                     WHEN $6::boolean
+                     THEN COALESCE($5, 'draft')
+                     ELSE COALESCE($5, status)
+                 END,
+                 scheduled_at = CASE
+                     WHEN $6::boolean THEN $7::timestamptz
+                     ELSE scheduled_at
+                 END,
+                 published_at = CASE
+                     WHEN $6::boolean THEN NULL
+                     ELSE published_at
+                 END,
                  updated_at = CURRENT_TIMESTAMP
-             WHERE id = $6
+             WHERE id = $8
              RETURNING *`,
-            [title, summary, content, featured_image, status, req.params.id]
+            [
+                title, summary, content, featured_image,
+                status, hasSchedule, scheduled_at || null, req.params.id
+            ]
         );
 
         if (!result.rows.length) {
@@ -168,10 +221,12 @@ router.put('/:id', async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: 'Failed to update news' });
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update news'
+        });
     }
 });
-
 
  // DELETE - Remove news
 router.delete('/:id', async (req, res) => {
