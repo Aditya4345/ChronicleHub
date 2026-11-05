@@ -129,7 +129,8 @@ function Home() {
           <a href="#articles">Stories</a>
           <Link to="/news">News</Link>
           <a href="#categories">Categories</a>
-          <a href="#about">About</a>
+          <a href="/about">About</a>
+          <a href="/contact">Contact</a>
         </nav>
 
         <div className="header-actions">
@@ -362,6 +363,44 @@ function Home() {
   )}
 </section>
 
+        {/* Locations */}
+        <section className="locations-section" id="locations">
+          <div className="locations-title-wrap">
+            <div className="eyebrow">FIND CHRONICLEHUB</div>
+            <h2>Our New York <em>office.</em></h2>
+            <p>Our editorial home for conversations, ideas and stories shaping what comes next.</p>
+          </div>
+
+          <div className="locations-layout">
+            <div className="location-info-card">
+              <span className="location-card-label">EDITORIAL OFFICE</span>
+              <h3 className="location-address">ChronicleHub</h3>
+              <p className="location-address-detail">45 Market Street<br />New York, NY 10013</p>
+              <p className="location-note">For editorial, partnership and reader inquiries, get in touch or find us on the map.</p>
+
+              <a
+                className="maps-button"
+                href="https://www.google.com/maps/search/?api=1&query=45+Market+Street%2C+New+York%2C+NY+10013"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span className="maps-icon" aria-hidden="true">↗</span>
+                Get directions
+              </a>
+            </div>
+
+            <iframe
+              className="map-panel"
+              title="Interactive map showing ChronicleHub's New York office"
+              src="https://maps.google.com/maps?q=45%20Market%20Street%2C%20New%20York%2C%20NY%2010013&output=embed"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
+          </div>
+        </section>
+
+        {/* Newsletter */}        
         <section className="newsletter-section" id="newsletter">
           <div className="newsletter-content">
             <div className="eyebrow">THE CHRONICLE LETTER</div>
@@ -407,9 +446,9 @@ function Home() {
           </div>
           <div className="footer-column">
             <h4>CHRONICLEHUB</h4>
-            <a href="#about">About us</a>
+            <a href="/about">About us</a>
             <a href="#newsletter">Newsletter</a>
-            <a href="mailto:hello@chroniclehub.com">Contact</a>
+            <a href="/contact">Contact</a>
           </div>
           <div className="footer-column">
             <h4>FOLLOW ALONG</h4>
@@ -427,4 +466,3 @@ function Home() {
 }
 
 export default Home
-
