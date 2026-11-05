@@ -1,6 +1,7 @@
 
 import { Link } from 'react-router-dom'
 import './Admin.css'
+import NewsManagement from './NewsManagement'
 
 const stats = [
   { title: 'Total Magazines', value: '24', change: '+12%', icon: '▤' },
@@ -293,29 +294,14 @@ function Admin() {
           </div>
         </section>
 
+
         {/* News Management */}
         <section className="admin-content-grid">
-
-          <div className="admin-panel" id="news">
-            <div className="panel-heading">
-              <div>
-                <h3>News Management</h3>
-                <p>Manage the latest news and updates</p>
-              </div>
-
-              <button
-                onClick={() => alert('Create news form coming soon.')}
-              >
-                + Add News
-              </button>
-            </div>
-
-            <p>
-              Create, edit, and publish news updates on your website.
-            </p>
+          <div id="news">
+            <NewsManagement />
           </div>
-
         </section>
+
 
         {/* Footer */}
         <footer className="admin-footer">

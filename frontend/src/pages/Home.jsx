@@ -1,8 +1,10 @@
-﻿
+
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import API from '../api'
 import '../App.css'
+
+import { Link } from 'react-router-dom'
 
 const magazines = [
   {
@@ -76,6 +78,28 @@ function formatDate(date) {
 }
 
 function Home() {
+    const [publishedNews, setPublishedNews] = useState([])
+  const [newsLoading, setNewsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchPublishedNews = async () => {
+      try {
+        const response = await API.get('/api/news')
+
+        const published = (response.data.news || []).filter(
+          (item) => item.status === 'published'
+        )
+
+        setPublishedNews(published)
+      } catch (error) {
+        console.error('Failed to fetch published news:', error)
+      } finally {
+        setNewsLoading(false)
+      }
+    }
+
+    fetchPublishedNews()
+  }, [])
   const [searchOpen, setSearchOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
@@ -161,9 +185,11 @@ function Home() {
           <a href="#home">Home</a>
           <a href="#magazines">Magazines</a>
           <a href="#articles">Stories</a>
-          <Link to="/blogs">Blogs</Link>
+<Link to="/blogs">Blogs</Link>
+<Link to="/news">News</Link>
           <a href="#categories">Categories</a>
-          <a href="#about">About</a>
+          <a href="/about">About</a>
+          <a href="/contact">Contact</a>
         </nav>
 
         <div className="header-actions">
@@ -432,10 +458,66 @@ function Home() {
             )}
           </div>
         </section>
+{/* Latest News from Admin */}
+<section className="section articles-section" id="latest-news">
+  <div className="section-heading">
+    <div>
+      <div className="eyebrow">FRESH FROM THE NEWSROOM</div>
+      <h2>Latest <em>News.</em></h2>
+    </div>
+    <span className="article-count">CHRONICLEHUB NEWS</span>
+  </div>
+
+
+        {/* Latest News from Admin */}
+        <div className="articles-grid">
+          {newsLoading ? (
+            <p>Loading latest news...</p>
+          ) : publishedNews.length === 0 ? (
+            <p className="empty-state">
+              No published news available yet.
+            </p>
+          ) : (
+            publishedNews.map((item, index) => (
+              <article className="article-card" key={item.id}>
+                {item.featured_image && (
+                  <div className="article-image">
+                    <img
+                      src={item.featured_image}
+                      alt={item.title}
+                      loading="lazy"
+                    />
+                    <span className="article-index">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                  </div>
+                )}
+
+                <div className="article-meta">
+                  <span>NEWS</span>
+                  <span>
+                    {item.published_at
+                      ? new Date(item.published_at).toLocaleDateString()
+                      : 'Recently published'}
+                  </span>
+                </div>
+
+                <h3>{item.title}</h3>
+                <p>
+                  {item.summary || 'Read the latest update from ChronicleHub.'}
+                </p>
+
+                <div className="article-bottom">
+                  <span>By Editorial Team</span>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+        </section>
 
         {/* Latest six published blogs */}
         <section className="section articles-section" id="blogs">
-
           <div className="section-heading">
             <div>
               <div className="eyebrow">FROM OUR CONTRIBUTORS</div>
@@ -445,33 +527,22 @@ function Home() {
             </div>
 
             <Link to="/blogs" className="view-all">
-              View All Blogs ↗
+              View All Blogs →
             </Link>
           </div>
 
           {blogsLoading ? (
-            <p className="empty-state">
-              Loading published blogs...
-            </p>
+            <p className="empty-state">Loading published blogs...</p>
           ) : blogsError ? (
-            <p className="empty-state">
-              {blogsError}
-            </p>
+            <p className="empty-state">{blogsError}</p>
           ) : blogs.length > 0 ? (
-
             <div className="articles-grid">
-
               {blogs.map((blog, index) => (
-                <article
-                  className="article-card"
-                  key={blog.id}
-                >
-
+                <article className="article-card" key={blog.id}>
                   <Link
                     to={`/blogs/${blog.id}`}
                     className="blog-card-link"
                   >
-
                     <div className="article-image">
                       <img
                         src={
@@ -489,7 +560,6 @@ function Home() {
 
                     <div className="article-meta">
                       <span>BLOG</span>
-
                       <span>
                         {formatDate(blog.published_at || blog.created_at)}
                       </span>
@@ -505,7 +575,6 @@ function Home() {
                             : '')
                         : 'Read our latest blog.'}
                     </p>
-
                   </Link>
 
                   <div className="article-bottom">
@@ -517,24 +586,147 @@ function Home() {
                       to={`/blogs/${blog.id}`}
                       aria-label={`Read ${blog.title}`}
                     >
-                      ↗
+                      →
                     </Link>
                   </div>
-
                 </article>
               ))}
-
             </div>
-
           ) : (
             <p className="empty-state">
               No published blogs available yet. Check back soon for new stories.
             </p>
           )}
+        </section>
 
+        {/* Locations */}
+        <section className="locations-section" id="locations">
+          <div className="locations-title-wrap">
+            <div className="eyebrow">FIND CHRONICLEHUB</div>
+            <h2>Our New York <em>office.</em></h2>
+            <p>
+              Our editorial home for conversations, ideas and stories shaping
+              what comes next.
+            </p>
+          </div>
+
+          <div className="locations-layout">
+            <div className="location-info-card">
+              <span className="location-card-label">EDITORIAL OFFICE</span>
+              <h3 className="location-address">ChronicleHub</h3>
+              <p className="location-address-detail">
+                45 Market Street<br />
+                New York, NY 10013
+              </p>
+              <p className="location-note">
+                For editorial, partnership and reader inquiries, get in touch
+                or find us on the map.
+              </p>
+
+              <a
+                className="maps-button"
+                href="https://www.google.com/maps/search/?api=1&query=45+Market+Street%2C+New+York%2C+NY+10013"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span className="maps-icon" aria-hidden="true">→</span>
+                Get directions
+              </a>
+            </div>
+
+            <iframe
+              className="map-panel"
+              title="Interactive map showing ChronicleHub's New York office"
+              src="https://maps.google.com/maps?q=45%20Market%20Street%2C%20New%20York%2C%20NY%2010013&output=embed"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
+          </div>
         </section>
 
         {/* Newsletter */}
+
+  {newsLoading ? (
+    <p>Loading latest news...</p>
+  ) : publishedNews.length === 0 ? (
+    <p className="empty-state">No published news available yet.</p>
+  ) : (
+    <div className="articles-grid">
+      {publishedNews.map((item, index) => (
+        <article className="article-card" key={item.id}>
+          {item.featured_image && (
+            <div className="article-image">
+              <img
+                src={item.featured_image}
+                alt={item.title}
+                loading="lazy"
+              />
+              <span className="article-index">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+            </div>
+          )}
+
+          <div className="article-meta">
+            <span>NEWS</span>
+            <span>
+              {item.published_at
+                ? new Date(item.published_at).toLocaleDateString()
+                : 'Recently published'}
+            </span>
+          </div>
+
+          <h3>{item.title}</h3>
+          <p>{item.summary || 'Read the latest update from ChronicleHub.'}</p>
+          <div className="article-bottom">
+            <span>By Editorial Team</span>
+          </div>
+        </article>
+      ))}
+    </div>
+  )}
+</section>
+
+        {/* Locations */}
+        <section className="locations-section" id="locations">
+          <div className="locations-title-wrap">
+            <div className="eyebrow">FIND CHRONICLEHUB</div>
+            <h2>Our New York <em>office.</em></h2>
+            <p>Our editorial home for conversations, ideas and stories shaping what comes next.</p>
+          </div>
+
+          <div className="locations-layout">
+            <div className="location-info-card">
+              <span className="location-card-label">EDITORIAL OFFICE</span>
+              <h3 className="location-address">ChronicleHub</h3>
+              <p className="location-address-detail">45 Market Street<br />New York, NY 10013</p>
+              <p className="location-note">For editorial, partnership and reader inquiries, get in touch or find us on the map.</p>
+
+              <a
+                className="maps-button"
+                href="https://www.google.com/maps/search/?api=1&query=45+Market+Street%2C+New+York%2C+NY+10013"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span className="maps-icon" aria-hidden="true">↗</span>
+                Get directions
+              </a>
+            </div>
+
+            <iframe
+              className="map-panel"
+              title="Interactive map showing ChronicleHub's New York office"
+              src="https://maps.google.com/maps?q=45%20Market%20Street%2C%20New%20York%2C%20NY%2010013&output=embed"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
+          </div>
+        </section>
+
+        {/* Newsletter */}
+
         <section className="newsletter-section" id="newsletter">
           <div className="newsletter-content">
             <div className="eyebrow">THE CHRONICLE LETTER</div>
@@ -616,9 +808,9 @@ function Home() {
 
           <div className="footer-column">
             <h4>CHRONICLEHUB</h4>
-            <a href="#about">About us</a>
+            <a href="/about">About us</a>
             <a href="#newsletter">Newsletter</a>
-            <a href="mailto:hello@chroniclehub.com">Contact</a>
+            <a href="/contact">Contact</a>
           </div>
 
           <div className="footer-column">
