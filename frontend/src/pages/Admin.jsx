@@ -1,4 +1,5 @@
 import './Admin.css'
+import NewsManagement from './NewsManagement'
 
 const stats = [
   { title: 'Total Magazines', value: '24', change: '+12%', icon: '▤' },
@@ -196,19 +197,10 @@ function Admin() {
             <p>Manage blog content, edit existing posts, and publish new blogs.</p>
           </div>
 
-          <div className="admin-panel" id="news">
-            <div className="panel-heading">
-              <div>
-                <h3>News Management</h3>
-                <p>Manage the latest news and updates</p>
+             <div id="news">
+              <NewsManagement />
               </div>
-              <button onClick={() => alert('Create news form coming soon.')}>
-                + Add News
-              </button>
-            </div>
 
-            <p>Create, edit, and publish news updates on your website.</p>
-          </div>
         </section>
         <footer className="admin-footer">
           © 2026 ChronicleHub · Admin Panel
