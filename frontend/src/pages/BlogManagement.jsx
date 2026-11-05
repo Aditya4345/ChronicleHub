@@ -3,6 +3,39 @@ import { useEffect, useState } from 'react';
 import API from '../api';
 import './BlogManagement.css';
 
+// Initial form values
+const initialForm = {
+    title: '',
+    content: '',
+    featured_image: '',
+    status: 'draft',
+    scheduled_at: ''
+};
+
+// Convert a date into India Standard Time for datetime-local
+function toISTDateTime(value) {
+    if (!value) return '';
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return '';
+
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23'
+    }).formatToParts(date);
+
+    const get = (type) =>
+        parts.find((part) => part.type === type)?.value;
+
+    return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
+}
+
 function BlogManagement() {
     const [blogs, setBlogs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -11,16 +44,12 @@ function BlogManagement() {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
 
-    const initialForm = {
-        title: '',
-        content: '',
-        featured_image: '',
-        status: 'draft'
-    };
+    // Search state
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [formData, setFormData] = useState(initialForm);
 
-    // Fetch all blogs from the backend
+    // Fetch all blogs from backend
     const fetchBlogs = async () => {
         try {
             setLoading(true);
@@ -28,9 +57,11 @@ function BlogManagement() {
 
             const response = await API.get('/api/blogs');
             setBlogs(response.data.blogs || []);
+
         } catch (err) {
             console.error('Error fetching blogs:', err);
             setError('Unable to load blogs. Please check your backend.');
+
         } finally {
             setLoading(false);
         }
@@ -39,6 +70,13 @@ function BlogManagement() {
     useEffect(() => {
         fetchBlogs();
     }, []);
+
+    // Filter blogs by title
+    const filteredBlogs = blogs.filter((blog) =>
+        (blog.title || '')
+            .toLowerCase()
+            .includes(searchTerm.trim().toLowerCase())
+    );
 
     // Handle form input changes
     const handleChange = (e) => {
@@ -53,7 +91,7 @@ function BlogManagement() {
     // Open create form
     const handleAddBlog = () => {
         setEditingId(null);
-        setFormData(initialForm);
+        setFormData({ ...initialForm });
         setMessage('');
         setError('');
         setShowForm(true);
@@ -67,7 +105,8 @@ function BlogManagement() {
             title: blog.title || '',
             content: blog.content || '',
             featured_image: blog.featured_image || '',
-            status: blog.status || 'draft'
+            status: blog.status || 'draft',
+            scheduled_at: toISTDateTime(blog.scheduled_at)
         });
 
         setMessage('');
@@ -83,19 +122,61 @@ function BlogManagement() {
         setError('');
 
         try {
-            if (editingId !== null) {
-                await API.put(`/api/blogs/${editingId}`, formData);
-                setMessage('Blog updated successfully.');
+            const payload = { ...formData };
+
+            // Validate and convert scheduled date to ISO
+            if (payload.status === 'scheduled') {
+                if (!payload.scheduled_at) {
+                    setError('Please select a publication date and time.');
+                    return;
+                }
+
+                // Interpret datetime-local value as IST
+                const scheduledDate = new Date(
+                    `${payload.scheduled_at}:00+05:30`
+                );
+
+                if (
+                    Number.isNaN(scheduledDate.getTime()) ||
+                    scheduledDate <= new Date()
+                ) {
+                    setError('Please select a future date and time.');
+                    return;
+                }
+
+                payload.scheduled_at = scheduledDate.toISOString();
+
             } else {
-                await API.post('/api/blogs', formData);
-                setMessage('Blog created successfully.');
+                payload.scheduled_at = null;
+            }
+
+            if (editingId !== null) {
+                await API.put(`/api/blogs/${editingId}`, payload);
+
+                setMessage(
+                    payload.status === 'scheduled'
+                        ? 'Blog schedule updated successfully.'
+                        : 'Blog updated successfully.'
+                );
+
+            } else {
+                await API.post('/api/blogs', payload);
+
+                setMessage(
+                    payload.status === 'scheduled'
+                        ? 'Blog scheduled successfully.'
+                        : payload.status === 'published'
+                            ? 'Blog published successfully.'
+                            : 'Blog saved as draft successfully.'
+                );
             }
 
             setShowForm(false);
             setEditingId(null);
-            setFormData(initialForm);
+            setFormData({ ...initialForm });
 
             await fetchBlogs();
+
         } catch (err) {
             console.error('Error saving blog:', err);
 
@@ -121,6 +202,7 @@ function BlogManagement() {
             setError('');
 
             await fetchBlogs();
+
         } catch (err) {
             console.error('Error deleting blog:', err);
 
@@ -138,9 +220,38 @@ function BlogManagement() {
         return new Date(date).toLocaleDateString('en-IN', {
             day: 'numeric',
             month: 'short',
-            year: 'numeric'
+            year: 'numeric',
+            timeZone: 'Asia/Kolkata'
         });
     };
+
+    // Format scheduled date and time
+    const formatScheduledDate = (date) => {
+        if (!date) return 'Date not set';
+
+        return new Date(date).toLocaleString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+            timeZone: 'Asia/Kolkata'
+        });
+    };
+
+    // Calculate summary counts
+    const publishedCount = blogs.filter(
+        (blog) => blog.status === 'published'
+    ).length;
+
+    const draftCount = blogs.filter(
+        (blog) => blog.status === 'draft'
+    ).length;
+
+    const scheduledCount = blogs.filter(
+        (blog) => blog.status === 'scheduled'
+    ).length;
 
     return (
         <section className="blog-management">
@@ -169,21 +280,30 @@ function BlogManagement() {
 
                 <div>
                     <span>Published</span>
-                    <strong>
-                        {blogs.filter(
-                            (blog) => blog.status === 'published'
-                        ).length}
-                    </strong>
+                    <strong>{publishedCount}</strong>
                 </div>
 
                 <div>
                     <span>Drafts</span>
-                    <strong>
-                        {blogs.filter(
-                            (blog) => blog.status === 'draft'
-                        ).length}
-                    </strong>
+                    <strong>{draftCount}</strong>
                 </div>
+
+                <div>
+                    <span>Scheduled</span>
+                    <strong>{scheduledCount}</strong>
+                </div>
+            </div>
+
+            {/* Search blogs */}
+            <div className="blog-search-wrapper">
+                <input
+                    type="search"
+                    className="blog-search-input"
+                    placeholder="Search blogs by title..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    aria-label="Search blogs by title"
+                />
             </div>
 
             {/* Success and error messages */}
@@ -246,6 +366,7 @@ function BlogManagement() {
                             />
                         </div>
 
+                        {/* Image preview */}
                         {formData.featured_image && (
                             <div className="blog-image-preview">
                                 <img
@@ -253,6 +374,9 @@ function BlogManagement() {
                                     alt="Blog preview"
                                     onError={(e) => {
                                         e.currentTarget.style.display = 'none';
+                                    }}
+                                    onLoad={(e) => {
+                                        e.currentTarget.style.display = 'block';
                                     }}
                                 />
                             </div>
@@ -279,12 +403,47 @@ function BlogManagement() {
                                 value={formData.status}
                                 onChange={handleChange}
                             >
-                                <option value="draft">Save as Draft</option>
-                                <option value="published">Publish Blog</option>
+                                <option value="draft">
+                                    Save as Draft
+                                </option>
+
+                                <option value="published">
+                                    Publish Now
+                                </option>
+
+                                <option value="scheduled">
+                                    Schedule for Later
+                                </option>
                             </select>
                         </div>
 
+                        {/* Scheduled date and time */}
+                        {formData.status === 'scheduled' && (
+                            <div className="blog-form-group">
+                                <label>
+                                    Scheduled Publication Date & Time (IST) *
+                                </label>
+
+                                <input
+                                    type="datetime-local"
+                                    name="scheduled_at"
+                                    value={formData.scheduled_at}
+                                    onChange={handleChange}
+                                    min={toISTDateTime(new Date())}
+                                    required
+                                />
+
+                                <small>
+                                    Your blog will automatically be published
+                                    at the selected time.
+                                    Timezone: India Standard Time (IST).
+                                </small>
+                            </div>
+                        )}
+
+                        {/* Form actions */}
                         <div className="blog-form-actions">
+
                             <button
                                 type="button"
                                 className="blog-cancel-btn"
@@ -299,16 +458,21 @@ function BlogManagement() {
                             >
                                 {editingId !== null
                                     ? 'Update Blog'
-                                    : 'Save Blog'}
+                                    : formData.status === 'scheduled'
+                                        ? 'Schedule Blog'
+                                        : formData.status === 'published'
+                                            ? 'Publish Blog'
+                                            : 'Save Blog'}
                             </button>
-                        </div>
 
+                        </div>
                     </form>
                 </div>
             )}
 
             {/* Blogs table */}
             <div className="blog-table-wrapper">
+
                 <table className="blog-table">
 
                     <thead>
@@ -328,17 +492,29 @@ function BlogManagement() {
                                     Loading blogs...
                                 </td>
                             </tr>
+
                         ) : blogs.length === 0 ? (
                             <tr>
                                 <td colSpan="5" className="blog-empty">
-                                    No blogs found. Click "+ Add Blog" to create your first blog.
+                                    No blogs found. Click "+ Add Blog" to
+                                    create your first blog.
                                 </td>
                             </tr>
+
+                        ) : filteredBlogs.length === 0 ? (
+                            <tr>
+                                <td colSpan="5" className="blog-empty">
+                                    No blogs match "{searchTerm}".
+                                </td>
+                            </tr>
+
                         ) : (
-                            blogs.map((blog) => (
+                            filteredBlogs.map((blog) => (
                                 <tr key={blog.id}>
+
                                     <td>
                                         <div className="blog-table-title">
+
                                             {blog.featured_image && (
                                                 <img
                                                     src={blog.featured_image}
@@ -355,19 +531,25 @@ function BlogManagement() {
                                     </td>
 
                                     <td>
-                                        <span className={`blog-status ${blog.status}`}>
+                                        <span
+                                            className={`blog-status ${blog.status}`}
+                                        >
                                             {blog.status}
                                         </span>
                                     </td>
 
                                     <td>
-                                        {formatDate(
-                                            blog.published_at || blog.created_at
-                                        )}
+                                        {blog.status === 'scheduled'
+                                            ? `Scheduled: ${formatScheduledDate(blog.scheduled_at)}`
+                                            : formatDate(
+                                                blog.published_at ||
+                                                blog.created_at
+                                            )}
                                     </td>
 
                                     <td>
                                         <div className="blog-action-buttons">
+
                                             <button
                                                 className="blog-edit-btn"
                                                 onClick={() => handleEdit(blog)}
@@ -381,8 +563,10 @@ function BlogManagement() {
                                             >
                                                 Delete
                                             </button>
+
                                         </div>
                                     </td>
+
                                 </tr>
                             ))
                         )}

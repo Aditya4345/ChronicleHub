@@ -13,6 +13,7 @@ const getAllBlogs = async (req, res) => {
                 b.author_id,
                 b.status,
                 b.published_at,
+                b.scheduled_at,
                 b.created_at,
                 b.updated_at,
                 u.full_name AS author_name
@@ -25,14 +26,17 @@ const getAllBlogs = async (req, res) => {
             success: true,
             blogs: result.rows
         });
+
     } catch (error) {
         console.error('Get blogs error:', error);
+
         res.status(500).json({
             success: false,
             message: 'Unable to fetch blogs.'
         });
     }
 };
+
 
 // 2. Get only published blogs for public website
 const getPublishedBlogs = async (req, res) => {
@@ -55,14 +59,17 @@ const getPublishedBlogs = async (req, res) => {
             success: true,
             blogs: result.rows
         });
+
     } catch (error) {
         console.error('Get published blogs error:', error);
+
         res.status(500).json({
             success: false,
             message: 'Unable to fetch published blogs.'
         });
     }
 };
+
 
 // 3. Get one blog by ID
 const getBlogById = async (req, res) => {
@@ -85,6 +92,7 @@ const getBlogById = async (req, res) => {
                 b.author_id,
                 b.status,
                 b.published_at,
+                b.scheduled_at,
                 b.created_at,
                 b.updated_at,
                 u.full_name AS author_name
@@ -104,14 +112,17 @@ const getBlogById = async (req, res) => {
             success: true,
             blog: result.rows[0]
         });
+
     } catch (error) {
         console.error('Get blog error:', error);
+
         res.status(500).json({
             success: false,
             message: 'Unable to fetch blog.'
         });
     }
 };
+
 
 // 4. Create a new blog
 const createBlog = async (req, res) => {
@@ -121,10 +132,17 @@ const createBlog = async (req, res) => {
             content,
             featured_image,
             author_id,
-            status
+            status,
+            scheduled_at
         } = req.body;
 
-        if (!title || !title.trim() || !content || !content.trim()) {
+        // Validate required fields
+        if (
+            typeof title !== 'string' ||
+            !title.trim() ||
+            typeof content !== 'string' ||
+            !content.trim()
+        ) {
             return res.status(400).json({
                 success: false,
                 message: 'Blog title and content are required.'
@@ -133,11 +151,36 @@ const createBlog = async (req, res) => {
 
         const blogStatus = status || 'draft';
 
-        if (!['draft', 'published'].includes(blogStatus)) {
+        // Validate status
+        if (!['draft', 'published', 'scheduled'].includes(blogStatus)) {
             return res.status(400).json({
                 success: false,
-                message: 'Status must be draft or published.'
+                message: 'Invalid blog status.'
             });
+        }
+
+        let scheduleDate = null;
+
+        // Validate scheduled date
+        if (blogStatus === 'scheduled') {
+            if (
+                !scheduled_at ||
+                !Number.isFinite(Date.parse(scheduled_at))
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Please select a valid scheduled date and time.'
+                });
+            }
+
+            scheduleDate = new Date(scheduled_at);
+
+            if (scheduleDate <= new Date()) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Scheduled date and time must be in the future.'
+                });
+            }
         }
 
         const result = await pool.query(`
@@ -148,10 +191,25 @@ const createBlog = async (req, res) => {
                 author_id,
                 status,
                 published_at,
+                scheduled_at,
                 updated_at
             )
-            VALUES ($1, $2, $3, $4, $5,
-                CASE WHEN $5 = 'published' THEN CURRENT_TIMESTAMP ELSE NULL END,
+            VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5::varchar,
+                CASE
+                    WHEN $5::varchar = 'published'
+                    THEN CURRENT_TIMESTAMP
+                    ELSE NULL
+                END,
+                CASE
+                    WHEN $5::varchar = 'scheduled'
+                    THEN $6::timestamptz
+                    ELSE NULL
+                END,
                 CURRENT_TIMESTAMP
             )
             RETURNING *
@@ -160,16 +218,21 @@ const createBlog = async (req, res) => {
             content.trim(),
             featured_image || null,
             author_id || null,
-            blogStatus
+            blogStatus,
+            scheduleDate
         ]);
 
         res.status(201).json({
             success: true,
-            message: 'Blog created successfully.',
+            message: blogStatus === 'scheduled'
+                ? 'Blog scheduled successfully.'
+                : 'Blog created successfully.',
             blog: result.rows[0]
         });
+
     } catch (error) {
         console.error('Create blog error:', error);
+
         res.status(500).json({
             success: false,
             message: 'Unable to create blog.'
@@ -177,18 +240,22 @@ const createBlog = async (req, res) => {
     }
 };
 
+
 // 5. Update an existing blog
 const updateBlog = async (req, res) => {
     try {
         const { id } = req.params;
+
         const {
             title,
             content,
             featured_image,
             author_id,
-            status
+            status,
+            scheduled_at
         } = req.body;
 
+        // Validate blog ID
         if (!/^\d+$/.test(id)) {
             return res.status(400).json({
                 success: false,
@@ -196,18 +263,49 @@ const updateBlog = async (req, res) => {
             });
         }
 
-        if (!title || !title.trim() || !content || !content.trim()) {
+        // Validate required fields
+        if (
+            typeof title !== 'string' ||
+            !title.trim() ||
+            typeof content !== 'string' ||
+            !content.trim()
+        ) {
             return res.status(400).json({
                 success: false,
                 message: 'Blog title and content are required.'
             });
         }
 
-        if (!['draft', 'published'].includes(status)) {
+        // Validate status
+        if (!['draft', 'published', 'scheduled'].includes(status)) {
             return res.status(400).json({
                 success: false,
-                message: 'Status must be draft or published.'
+                message: 'Invalid blog status.'
             });
+        }
+
+        let scheduleDate = null;
+
+        // Validate scheduled date
+        if (status === 'scheduled') {
+            if (
+                !scheduled_at ||
+                !Number.isFinite(Date.parse(scheduled_at))
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Please select a valid scheduled date and time.'
+                });
+            }
+
+            scheduleDate = new Date(scheduled_at);
+
+            if (scheduleDate <= new Date()) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Scheduled date and time must be in the future.'
+                });
+            }
         }
 
         const result = await pool.query(`
@@ -217,14 +315,25 @@ const updateBlog = async (req, res) => {
                 content = $2,
                 featured_image = $3,
                 author_id = $4,
-                status = $5,
+                status = $5::varchar,
+
                 published_at = CASE
-                    WHEN $5 = 'draft' THEN NULL
-                    WHEN published_at IS NULL THEN CURRENT_TIMESTAMP
+                    WHEN $5::varchar IN ('draft', 'scheduled')
+                    THEN NULL
+                    WHEN published_at IS NULL
+                    THEN CURRENT_TIMESTAMP
                     ELSE published_at
                 END,
+
+                scheduled_at = CASE
+                    WHEN $5::varchar = 'scheduled'
+                    THEN $6::timestamptz
+                    ELSE NULL
+                END,
+
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $6
+
+            WHERE id = $7
             RETURNING *
         `, [
             title.trim(),
@@ -232,6 +341,7 @@ const updateBlog = async (req, res) => {
             featured_image || null,
             author_id || null,
             status,
+            scheduleDate,
             id
         ]);
 
@@ -244,17 +354,22 @@ const updateBlog = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Blog updated successfully.',
+            message: status === 'scheduled'
+                ? 'Blog schedule updated successfully.'
+                : 'Blog updated successfully.',
             blog: result.rows[0]
         });
+
     } catch (error) {
         console.error('Update blog error:', error);
+
         res.status(500).json({
             success: false,
             message: 'Unable to update blog.'
         });
     }
 };
+
 
 // 6. Delete a blog
 const deleteBlog = async (req, res) => {
@@ -284,8 +399,10 @@ const deleteBlog = async (req, res) => {
             success: true,
             message: 'Blog deleted successfully.'
         });
+
     } catch (error) {
         console.error('Delete blog error:', error);
+
         res.status(500).json({
             success: false,
             message: 'Unable to delete blog.'
@@ -293,6 +410,8 @@ const deleteBlog = async (req, res) => {
     }
 };
 
+
+// Export all controller functions
 module.exports = {
     getAllBlogs,
     getPublishedBlogs,

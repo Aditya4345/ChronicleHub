@@ -1,5 +1,7 @@
 ﻿
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import API from '../api'
 import '../App.css'
 
 const magazines = [
@@ -50,10 +52,27 @@ const articles = [
   },
 ]
 
-const categories = ['All', 'Business', 'Leadership', 'Technology', 'Startups', 'Innovation']
+const categories = [
+  'All',
+  'Business',
+  'Leadership',
+  'Technology',
+  'Startups',
+  'Innovation',
+]
 
 function imageUrl(id, width = 900) {
   return `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${width}&q=85`
+}
+
+function formatDate(date) {
+  if (!date) return 'Recently published'
+
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 }
 
 function Home() {
@@ -62,6 +81,37 @@ function Home() {
   const [activeCategory, setActiveCategory] = useState('All')
   const [email, setEmail] = useState('')
   const [subscribed, setSubscribed] = useState(false)
+
+  // Published blogs from the backend
+  const [blogs, setBlogs] = useState([])
+  const [blogsLoading, setBlogsLoading] = useState(true)
+  const [blogsError, setBlogsError] = useState('')
+
+  // Fetch published blogs
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        setBlogsLoading(true)
+        setBlogsError('')
+
+        const response = await API.get('/api/blogs/published')
+
+        const publishedBlogs = Array.isArray(response.data)
+          ? response.data
+          : response.data.blogs || []
+
+        // Show only the latest six blogs
+        setBlogs(publishedBlogs.slice(0, 6))
+      } catch (error) {
+        console.error('Error fetching published blogs:', error)
+        setBlogsError('Unable to load blogs. Please try again later.')
+      } finally {
+        setBlogsLoading(false)
+      }
+    }
+
+    fetchBlogs()
+  }, [])
 
   const filteredArticles = articles.filter((article) => {
     const matchesCategory =
@@ -78,6 +128,7 @@ function Home() {
 
   function handleSubscribe(event) {
     event.preventDefault()
+
     if (email.trim()) {
       setSubscribed(true)
       setEmail('')
@@ -86,23 +137,31 @@ function Home() {
 
   return (
     <div className="site-wrapper">
+
       {/* Announcement bar */}
       <div className="announcement">
         <span>THE STORIES SHAPING TOMORROW</span>
-        <span className="announcement-right">INDEPENDENT IDEAS. GLOBAL PERSPECTIVES.</span>
+        <span className="announcement-right">
+          INDEPENDENT IDEAS. GLOBAL PERSPECTIVES.
+        </span>
       </div>
 
       {/* Header */}
       <header className="main-header">
         <a href="#home" className="brand">
-          <span className="brand-name">Chronicle<span>Hub.</span></span>
-          <span className="brand-caption">THE BUSINESS & LEADERSHIP JOURNAL</span>
+          <span className="brand-name">
+            Chronicle<span>Hub.</span>
+          </span>
+          <span className="brand-caption">
+            THE BUSINESS & LEADERSHIP JOURNAL
+          </span>
         </a>
 
         <nav className="main-nav">
           <a href="#home">Home</a>
           <a href="#magazines">Magazines</a>
           <a href="#articles">Stories</a>
+          <Link to="/blogs">Blogs</Link>
           <a href="#categories">Categories</a>
           <a href="#about">About</a>
         </nav>
@@ -113,9 +172,12 @@ function Home() {
             onClick={() => setSearchOpen(!searchOpen)}
             aria-label="Toggle search"
           >
-            {searchOpen ? 'âœ•' : 'âŒ•'}
+            {searchOpen ? '✕' : '⌕'}
           </button>
-          <a href="#newsletter" className="subscribe-button">Subscribe â†—</a>
+
+          <a href="#newsletter" className="subscribe-button">
+            Subscribe ↗
+          </a>
         </div>
       </header>
 
@@ -128,26 +190,48 @@ function Home() {
             onChange={(event) => setSearch(event.target.value)}
             autoFocus
           />
-          <button onClick={() => { setSearch(''); setSearchOpen(false) }}>
+
+          <button
+            onClick={() => {
+              setSearch('')
+              setSearchOpen(false)
+            }}
+          >
             Clear
           </button>
         </div>
       )}
 
       <main>
+
         {/* Hero */}
         <section className="hero-section" id="home">
           <div className="hero-content">
-            <div className="eyebrow"><span></span> IDEAS THAT MOVE THE WORLD</div>
-            <h1>Stories of ambition.<br />Ideas that <em>inspire.</em></h1>
+            <div className="eyebrow">
+              <span></span> IDEAS THAT MOVE THE WORLD
+            </div>
+
+            <h1>
+              Stories of ambition.
+              <br />
+              Ideas that <em>inspire.</em>
+            </h1>
+
             <p>
               Discover the people, businesses and bold ideas shaping
               the future of leadership, innovation and entrepreneurship.
             </p>
+
             <div className="hero-buttons">
-              <a href="#magazines" className="primary-button">Explore magazines â†—</a>
-              <a href="#articles" className="text-button">Read our stories â†’</a>
+              <a href="#magazines" className="primary-button">
+                Explore magazines ↗
+              </a>
+
+              <a href="#articles" className="text-button">
+                Read our stories →
+              </a>
             </div>
+
             <div className="hero-note">
               <span className="note-line"></span>
               A NEW PERSPECTIVE ON BUSINESS AND BEYOND
@@ -160,25 +244,40 @@ function Home() {
                 src={imageUrl('photo-1497366811353-6870744d04b2', 1200)}
                 alt="Modern workspace with a view"
               />
+
               <div className="hero-image-overlay"></div>
+
               <div className="hero-image-caption">
                 <span>THE NEXT CHAPTER</span>
-                <strong>Building a better<br />business future.</strong>
+                <strong>
+                  Building a better
+                  <br />
+                  business future.
+                </strong>
               </div>
             </div>
+
             <div className="hero-stamp">
               <span>CH</span>
-              <small>EST.<br />2026</small>
+              <small>
+                EST.
+                <br />
+                2026
+              </small>
             </div>
           </div>
         </section>
 
         {/* Editorial strip */}
         <div className="editorial-strip">
-          <span>BUSINESS</span><i>âœ³</i>
-          <span>LEADERSHIP</span><i>âœ³</i>
-          <span>INNOVATION</span><i>âœ³</i>
-          <span>ENTREPRENEURSHIP</span><i>âœ³</i>
+          <span>BUSINESS</span>
+          <i>✳</i>
+          <span>LEADERSHIP</span>
+          <i>✳</i>
+          <span>INNOVATION</span>
+          <i>✳</i>
+          <span>ENTREPRENEURSHIP</span>
+          <i>✳</i>
           <span>THE FUTURE</span>
         </div>
 
@@ -187,9 +286,14 @@ function Home() {
           <div className="section-heading">
             <div>
               <div className="eyebrow">THE LATEST EDITIONS</div>
-              <h2>Stories worth <em>holding.</em></h2>
+              <h2>
+                Stories worth <em>holding.</em>
+              </h2>
             </div>
-            <a href="#newsletter" className="view-all">Discover all editions â†—</a>
+
+            <a href="#newsletter" className="view-all">
+              Discover all editions ↗
+            </a>
           </div>
 
           <div className="magazine-grid">
@@ -201,13 +305,26 @@ function Home() {
                     alt={magazine.title}
                     loading="lazy"
                   />
-                  <span className="issue-label">{magazine.issue}</span>
-                  <span className="cover-number">0{index + 1}</span>
+
+                  <span className="issue-label">
+                    {magazine.issue}
+                  </span>
+
+                  <span className="cover-number">
+                    0{index + 1}
+                  </span>
                 </div>
+
                 <div className="magazine-info">
-                  <span className="card-category">{magazine.category}</span>
+                  <span className="card-category">
+                    {magazine.category}
+                  </span>
+
                   <h3>{magazine.title}</h3>
-                  <a href="#newsletter">Explore edition â†—</a>
+
+                  <a href="#newsletter">
+                    Explore edition ↗
+                  </a>
                 </div>
               </article>
             ))}
@@ -223,15 +340,23 @@ function Home() {
               loading="lazy"
             />
           </div>
+
           <div className="feature-content">
             <div className="eyebrow">BEYOND THE HEADLINES</div>
-            <h2>Every great story begins with a <em>vision.</em></h2>
+
+            <h2>
+              Every great story begins with a <em>vision.</em>
+            </h2>
+
             <p>
               ChronicleHub brings forward the voices, journeys and
               perspectives of people making a difference. We believe
               every ambitious idea deserves a platform.
             </p>
-            <a href="#articles" className="primary-button">Discover our world â†—</a>
+
+            <a href="#articles" className="primary-button">
+              Discover our world ↗
+            </a>
           </div>
         </section>
 
@@ -240,16 +365,25 @@ function Home() {
           <div className="section-heading">
             <div>
               <div className="eyebrow">THE EDITOR'S DESK</div>
-              <h2>Ideas in <em>focus.</em></h2>
+              <h2>
+                Ideas in <em>focus.</em>
+              </h2>
             </div>
-            <span className="article-count">LATEST STORIES / 2026</span>
+
+            <span className="article-count">
+              LATEST STORIES / 2026
+            </span>
           </div>
 
           <div className="category-filters" id="categories">
             {categories.map((category) => (
               <button
                 key={category}
-                className={activeCategory === category ? 'filter active' : 'filter'}
+                className={
+                  activeCategory === category
+                    ? 'filter active'
+                    : 'filter'
+                }
                 onClick={() => setActiveCategory(category)}
               >
                 {category}
@@ -267,39 +401,170 @@ function Home() {
                       alt={article.title}
                       loading="lazy"
                     />
-                    <span className="article-index">0{index + 1}</span>
+
+                    <span className="article-index">
+                      0{index + 1}
+                    </span>
                   </div>
+
                   <div className="article-meta">
                     <span>{article.category}</span>
                     <span>{article.date}</span>
                   </div>
+
                   <h3>{article.title}</h3>
+
                   <p>{article.description}</p>
+
                   <div className="article-bottom">
                     <span>By {article.author}</span>
-                    <a href="#newsletter" aria-label={`Read ${article.title}`}>â†—</a>
+
+                    <a href="#newsletter" aria-label={`Read ${article.title}`}>
+                      ↗
+                    </a>
                   </div>
                 </article>
               ))
             ) : (
-              <p className="empty-state">No stories found. Try another search or category.</p>
+              <p className="empty-state">
+                No stories found. Try another search or category.
+              </p>
             )}
           </div>
+        </section>
+
+        {/* Latest six published blogs */}
+        <section className="section articles-section" id="blogs">
+
+          <div className="section-heading">
+            <div>
+              <div className="eyebrow">FROM OUR CONTRIBUTORS</div>
+              <h2>
+                Latest <em>blogs.</em>
+              </h2>
+            </div>
+
+            <Link to="/blogs" className="view-all">
+              View All Blogs ↗
+            </Link>
+          </div>
+
+          {blogsLoading ? (
+            <p className="empty-state">
+              Loading published blogs...
+            </p>
+          ) : blogsError ? (
+            <p className="empty-state">
+              {blogsError}
+            </p>
+          ) : blogs.length > 0 ? (
+
+            <div className="articles-grid">
+
+              {blogs.map((blog, index) => (
+                <article
+                  className="article-card"
+                  key={blog.id}
+                >
+
+                  <Link
+                    to={`/blogs/${blog.id}`}
+                    className="blog-card-link"
+                  >
+
+                    <div className="article-image">
+                      <img
+                        src={
+                          blog.featured_image ||
+                          imageUrl('photo-1497366754035-f200968a6e72', 850)
+                        }
+                        alt={blog.title}
+                        loading="lazy"
+                      />
+
+                      <span className="article-index">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                    </div>
+
+                    <div className="article-meta">
+                      <span>BLOG</span>
+
+                      <span>
+                        {formatDate(blog.published_at || blog.created_at)}
+                      </span>
+                    </div>
+
+                    <h3>{blog.title}</h3>
+
+                    <p>
+                      {blog.content
+                        ? blog.content.replace(/<[^>]*>/g, '').slice(0, 160) +
+                          (blog.content.replace(/<[^>]*>/g, '').length > 160
+                            ? '...'
+                            : '')
+                        : 'Read our latest blog.'}
+                    </p>
+
+                  </Link>
+
+                  <div className="article-bottom">
+                    <span>
+                      By {blog.author_name || 'ChronicleHub Editorial Team'}
+                    </span>
+
+                    <Link
+                      to={`/blogs/${blog.id}`}
+                      aria-label={`Read ${blog.title}`}
+                    >
+                      ↗
+                    </Link>
+                  </div>
+
+                </article>
+              ))}
+
+            </div>
+
+          ) : (
+            <p className="empty-state">
+              No published blogs available yet. Check back soon for new stories.
+            </p>
+          )}
+
         </section>
 
         {/* Newsletter */}
         <section className="newsletter-section" id="newsletter">
           <div className="newsletter-content">
             <div className="eyebrow">THE CHRONICLE LETTER</div>
-            <h2>A little inspiration.<br /><em>Delivered.</em></h2>
-            <p>Get thoughtful stories, fresh perspectives and the latest editions delivered to your inbox.</p>
+
+            <h2>
+              A little inspiration.
+              <br />
+              <em>Delivered.</em>
+            </h2>
+
+            <p>
+              Get thoughtful stories, fresh perspectives and the latest
+              editions delivered to your inbox.
+            </p>
           </div>
+
           <div className="newsletter-form-area">
             {subscribed ? (
-              <p className="success-message">Thank you for subscribing!</p>
+              <p className="success-message">
+                Thank you for subscribing!
+              </p>
             ) : (
-              <form onSubmit={handleSubscribe} className="newsletter-form">
-                <label htmlFor="newsletter-email">YOUR EMAIL ADDRESS</label>
+              <form
+                onSubmit={handleSubscribe}
+                className="newsletter-form"
+              >
+                <label htmlFor="newsletter-email">
+                  YOUR EMAIL ADDRESS
+                </label>
+
                 <div className="email-input-wrap">
                   <input
                     id="newsletter-email"
@@ -309,48 +574,83 @@ function Home() {
                     onChange={(event) => setEmail(event.target.value)}
                     required
                   />
-                  <button type="submit">JOIN US â†—</button>
+
+                  <button type="submit">
+                    JOIN US ↗
+                  </button>
                 </div>
-                <small>By subscribing, you agree to receive ChronicleHub updates.</small>
+
+                <small>
+                  By subscribing, you agree to receive ChronicleHub updates.
+                </small>
               </form>
             )}
           </div>
         </section>
+
       </main>
 
       {/* Footer */}
       <footer className="main-footer">
         <div className="footer-top">
+
           <div className="footer-brand">
-            <a href="#home" className="brand-name">Chronicle<span>Hub.</span></a>
-            <p>Ideas, people and stories<br />shaping tomorrow.</p>
+            <a href="#home" className="brand-name">
+              Chronicle<span>Hub.</span>
+            </a>
+
+            <p>
+              Ideas, people and stories
+              <br />
+              shaping tomorrow.
+            </p>
           </div>
+
           <div className="footer-column">
             <h4>EXPLORE</h4>
             <a href="#magazines">Magazines</a>
             <a href="#articles">Latest stories</a>
+            <Link to="/blogs">All blogs</Link>
             <a href="#categories">Categories</a>
           </div>
+
           <div className="footer-column">
             <h4>CHRONICLEHUB</h4>
             <a href="#about">About us</a>
             <a href="#newsletter">Newsletter</a>
             <a href="mailto:hello@chroniclehub.com">Contact</a>
           </div>
+
           <div className="footer-column">
             <h4>FOLLOW ALONG</h4>
-            <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer">LinkedIn â†—</a>
-            <a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Instagram â†—</a>
+            <a
+              href="https://www.linkedin.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              LinkedIn ↗
+            </a>
+
+            <a
+              href="https://www.instagram.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Instagram ↗
+            </a>
           </div>
+
         </div>
+
         <div className="footer-bottom">
-          <span>Â© 2026 CHRONICLEHUB. ALL RIGHTS RESERVED.</span>
+          <span>© 2026 CHRONICLEHUB. ALL RIGHTS RESERVED.</span>
           <span>INDEPENDENT IDEAS. GLOBAL PERSPECTIVES.</span>
         </div>
+
       </footer>
+
     </div>
   )
 }
 
 export default Home
-

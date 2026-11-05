@@ -347,3 +347,49 @@
         flex-wrap: wrap;
     }
 }
+
+/* Scheduled blog status */
+.blog-status.scheduled {
+    background: #fff3d6;
+    color: #946200;
+}
+
+
+/* Blog title search */
+.blog-search-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin: 22px 0;
+}
+
+.blog-search-input {
+    width: 100%;
+    max-width: 350px;
+    padding: 12px 15px;
+    border: 1px solid #deded8;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #222222;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.blog-search-input:focus {
+    border-color: #b89b68;
+    box-shadow: 0 0 0 3px rgba(184, 155, 104, 0.12);
+}
+
+.blog-search-input::placeholder {
+    color: #999999;
+}
+
+@media (max-width: 600px) {
+    .blog-search-wrapper {
+        justify-content: stretch;
+    }
+
+    .blog-search-input {
+        max-width: 100%;
+    }
+}
