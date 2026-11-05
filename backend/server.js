@@ -1,14 +1,22 @@
-const newsRoutes = require('./routes/news');
+
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
 const pool = require('./config/db');
 
+// Import routes
+const blogRoutes = require('./routes/blogRoutes');
+const newsRoutes = require('./routes/news');
+
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
+
+// API routes
+app.use('/api/blogs', blogRoutes);
 app.use('/api/news', newsRoutes);
 
 // Welcome route
@@ -35,6 +43,7 @@ app.get('/api/db-test', async (req, res) => {
         });
     }
 });
+
 // Automatically publish scheduled news every 30 seconds
 const publishScheduledNews = async () => {
     try {
@@ -53,17 +62,51 @@ const publishScheduledNews = async () => {
             console.log('Scheduled news published:', result.rows);
         }
     } catch (error) {
-        console.error('Scheduled publishing error:', error);
+        console.error('Scheduled news publishing error:', error);
     }
 };
 
-// Check once when the server starts
-publishScheduledNews();
+// Automatically publish scheduled blogs every 60 seconds
+const publishScheduledBlogs = async () => {
+    try {
+        const result = await pool.query(`
+            UPDATE blogs
+            SET
+                status = 'published',
+                published_at = CURRENT_TIMESTAMP,
+                scheduled_at = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE
+                status = 'scheduled'
+                AND scheduled_at <= CURRENT_TIMESTAMP
+            RETURNING id, title
+        `);
 
-// Check every 30 seconds
-setInterval(publishScheduledNews, 30000);
-const PORT = process.env.PORT || 5000;
+        if (result.rows.length > 0) {
+            result.rows.forEach((blog) => {
+                console.log(
+                    `Scheduled blog published: ${blog.title} (ID: ${blog.id})`
+                );
+            });
+        }
+    } catch (error) {
+        console.error('Scheduled blog publishing error:', error);
+    }
+};
+
+// Start server
+const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
     console.log(`ChronicleHub server running on port ${PORT}`);
+
+    // Check scheduled content immediately
+    publishScheduledNews();
+    publishScheduledBlogs();
+
+    // Check scheduled news every 30 seconds
+    setInterval(publishScheduledNews, 30000);
+
+    // Check scheduled blogs every 60 seconds
+    setInterval(publishScheduledBlogs, 60000);
 });
