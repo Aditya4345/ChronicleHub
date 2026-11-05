@@ -1,6 +1,8 @@
-﻿
-import { useState } from 'react'
+
+import { useState, useEffect } from 'react'
+import API from '../api'
 import '../App.css'
+import { Link } from 'react-router-dom'
 
 const magazines = [
   {
@@ -57,6 +59,28 @@ function imageUrl(id, width = 900) {
 }
 
 function Home() {
+    const [publishedNews, setPublishedNews] = useState([])
+  const [newsLoading, setNewsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchPublishedNews = async () => {
+      try {
+        const response = await API.get('/api/news')
+
+        const published = (response.data.news || []).filter(
+          (item) => item.status === 'published'
+        )
+
+        setPublishedNews(published)
+      } catch (error) {
+        console.error('Failed to fetch published news:', error)
+      } finally {
+        setNewsLoading(false)
+      }
+    }
+
+    fetchPublishedNews()
+  }, [])
   const [searchOpen, setSearchOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
@@ -103,6 +127,7 @@ function Home() {
           <a href="#home">Home</a>
           <a href="#magazines">Magazines</a>
           <a href="#articles">Stories</a>
+          <Link to="/news">News</Link>
           <a href="#categories">Categories</a>
           <a href="#about">About</a>
         </nav>
@@ -286,8 +311,57 @@ function Home() {
             )}
           </div>
         </section>
+{/* Latest News from Admin */}
+<section className="section articles-section" id="latest-news">
+  <div className="section-heading">
+    <div>
+      <div className="eyebrow">FRESH FROM THE NEWSROOM</div>
+      <h2>Latest <em>News.</em></h2>
+    </div>
+    <span className="article-count">CHRONICLEHUB NEWS</span>
+  </div>
 
-        {/* Newsletter */}
+  {newsLoading ? (
+    <p>Loading latest news...</p>
+  ) : publishedNews.length === 0 ? (
+    <p className="empty-state">No published news available yet.</p>
+  ) : (
+    <div className="articles-grid">
+      {publishedNews.map((item, index) => (
+        <article className="article-card" key={item.id}>
+          {item.featured_image && (
+            <div className="article-image">
+              <img
+                src={item.featured_image}
+                alt={item.title}
+                loading="lazy"
+              />
+              <span className="article-index">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+            </div>
+          )}
+
+          <div className="article-meta">
+            <span>NEWS</span>
+            <span>
+              {item.published_at
+                ? new Date(item.published_at).toLocaleDateString()
+                : 'Recently published'}
+            </span>
+          </div>
+
+          <h3>{item.title}</h3>
+          <p>{item.summary || 'Read the latest update from ChronicleHub.'}</p>
+          <div className="article-bottom">
+            <span>By Editorial Team</span>
+          </div>
+        </article>
+      ))}
+    </div>
+  )}
+</section>
+
         <section className="newsletter-section" id="newsletter">
           <div className="newsletter-content">
             <div className="eyebrow">THE CHRONICLE LETTER</div>
