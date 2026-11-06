@@ -1,0 +1,290 @@
+/* Main Page */
+
+.subscriber-page {
+    min-height: 100vh;
+    padding: 30px;
+    background: #f4f6fa;
+}
+
+/* Header */
+
+.subscriber-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.subscriber-header h1 {
+    color: #172554;
+    margin-bottom: 5px;
+    font-size: 28px;
+}
+
+.subscriber-header p {
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* Header Buttons */
+
+.add-subscriber-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: 0.3s;
+}
+
+.add-subscriber-btn:hover {
+    background: #1d4ed8;
+}
+
+.export-btn {
+    background: #16a34a;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.export-btn:hover {
+    background: #15803d;
+}
+
+/* Search and Filter */
+
+.subscriber-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.subscriber-controls input {
+    flex: 1;
+}
+
+.subscriber-controls input,
+.subscriber-controls select {
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    background: white;
+}
+
+.subscriber-controls input:focus,
+.subscriber-controls select:focus {
+    border-color: #2563eb;
+}
+
+.subscriber-controls button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.subscriber-controls button:hover {
+    background: #1d4ed8;
+}
+
+/* Subscriber Table */
+
+.subscriber-table-container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    overflow-x: auto;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.subscriber-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 850px;
+}
+
+.subscriber-table th,
+.subscriber-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.subscriber-table th {
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.subscriber-table td {
+    color: #475569;
+}
+
+.subscriber-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+/* Subscriber Status */
+
+.subscriber-active {
+    display: inline-block;
+    background: #dcfce7;
+    color: #166534;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.subscriber-inactive {
+    display: inline-block;
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Edit and Status Buttons */
+
+.status-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 8px;
+    margin-bottom: 5px;
+    transition: 0.3s;
+}
+
+.status-btn:hover {
+    background: #1d4ed8;
+}
+
+/* Delete Button */
+
+.subscriber-delete-btn {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 5px;
+    transition: 0.3s;
+}
+
+.subscriber-delete-btn:hover {
+    background: #b91c1c;
+}
+
+/* Error Message */
+
+.subscriber-error {
+    color: #dc2626;
+    padding: 15px;
+}
+
+/* Loading and Empty Messages */
+
+.subscriber-table-container > p {
+    color: #64748b;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Pagination - For Next JSX Update */
+
+.subscriber-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 25px;
+    flex-wrap: wrap;
+}
+
+.subscriber-pagination button {
+    padding: 9px 15px;
+    border: 1px solid #cbd5e1;
+    background: white;
+    color: #172554;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.subscriber-pagination button.active {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
+.subscriber-pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive Design */
+
+@media (max-width: 768px) {
+
+    .subscriber-page {
+        padding: 15px;
+    }
+
+    .subscriber-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .subscriber-header h1 {
+        font-size: 23px;
+    }
+
+    .subscriber-controls {
+        flex-direction: column;
+    }
+
+    .subscriber-controls input,
+    .subscriber-controls select,
+    .subscriber-controls button {
+        width: 100%;
+    }
+
+    .subscriber-table-container {
+        padding: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .subscriber-header > div:last-child {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .add-subscriber-btn,
+    .export-btn {
+        width: 100%;
+        margin-right: 0;
+    }
+
+}
